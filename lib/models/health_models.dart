@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:health_tracker/app_exports.dart';
 
 // ── Food ──────────────────────────────────────────────────────────────────────
 enum FoodType { breakfast, lunch, snack, water, dinner }

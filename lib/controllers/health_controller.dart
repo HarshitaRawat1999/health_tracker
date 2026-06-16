@@ -1,9 +1,4 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
-import '../models/health_models.dart';
+import 'package:health_tracker/app_exports.dart';
 
 class HealthController extends GetxController {
   final _uuid = const Uuid();

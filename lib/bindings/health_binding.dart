@@ -1,6 +1,4 @@
-import 'package:get/get.dart';
-import '../controllers/health_controller.dart';
-import '../controllers/navigation_controller.dart';
+import 'package:health_tracker/app_exports.dart';
 
 class HealthBinding extends Bindings {
   @override

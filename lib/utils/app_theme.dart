@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:health_tracker/app_exports.dart';
 
 class AppTheme {
   static const Color primary = Color(0xFF2D6A4F);

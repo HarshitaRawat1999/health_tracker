@@ -1,13 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
-import '../controllers/health_controller.dart';
-import '../controllers/navigation_controller.dart';
-import '../utils/app_theme.dart';
-import 'dashboard_screen.dart';
-import 'food_screen.dart';
-import 'health_screen.dart';
-import 'exercise_screen.dart';
+import 'package:health_tracker/app_exports.dart';
 
 class HomeScreen extends GetView<NavigationController> {
   const HomeScreen({super.key});

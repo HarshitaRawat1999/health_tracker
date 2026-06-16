@@ -1,11 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import '../controllers/health_controller.dart';
-import '../models/health_models.dart';
-import '../utils/app_theme.dart';
-import '../widgets/date_filter_action.dart';
+import 'package:health_tracker/app_exports.dart';
 
 class ExerciseScreen extends GetView<HealthController> {
   const ExerciseScreen({super.key});

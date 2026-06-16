@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'bindings/health_binding.dart';
-import 'screens/home_screen.dart';
-import 'utils/app_theme.dart';
+import 'app_exports.dart';
 
 void main() {
   runApp(const HealthTrackerApp());
