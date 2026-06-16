@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-enum RecordCategory { food, healthReading, exercise }
-
 // ── Food ──────────────────────────────────────────────────────────────────────
 enum FoodType { breakfast, lunch, snack, water, dinner }
 
@@ -47,15 +45,22 @@ class FoodRecord {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'type': type.index, 'name': name,
+    'id': id, 'type': type.name, 'name': name,
     'calories': calories, 'waterMl': waterMl,
     'timestamp': timestamp.toIso8601String(), 'notes': notes,
   };
 
   factory FoodRecord.fromJson(Map<String, dynamic> j) => FoodRecord(
-    id: j['id'], type: FoodType.values[j['type']], name: j['name'],
-    calories: j['calories']?.toDouble(), waterMl: j['waterMl']?.toDouble(),
-    timestamp: DateTime.parse(j['timestamp']), notes: j['notes'],
+    id: j['id'],
+    // legacy records stored type as int index; new records store name string
+    type: j['type'] is int
+        ? FoodType.values[j['type'] as int]
+        : FoodType.values.byName(j['type'] as String),
+    name: j['name'],
+    calories: j['calories']?.toDouble(),
+    waterMl: j['waterMl']?.toDouble(),
+    timestamp: DateTime.parse(j['timestamp']),
+    notes: j['notes'],
   );
 }
 
@@ -98,8 +103,8 @@ class HealthReading {
   final String id;
   final HealthReadingType type;
   final double value;
-  final double? systolic;   // for BP
-  final double? diastolic;  // for BP
+  final double? systolic;
+  final double? diastolic;
   final DateTime timestamp;
   final String? notes;
 
@@ -121,15 +126,21 @@ class HealthReading {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'type': type.index, 'value': value,
+    'id': id, 'type': type.name, 'value': value,
     'systolic': systolic, 'diastolic': diastolic,
     'timestamp': timestamp.toIso8601String(), 'notes': notes,
   };
 
   factory HealthReading.fromJson(Map<String, dynamic> j) => HealthReading(
-    id: j['id'], type: HealthReadingType.values[j['type']], value: j['value'].toDouble(),
-    systolic: j['systolic']?.toDouble(), diastolic: j['diastolic']?.toDouble(),
-    timestamp: DateTime.parse(j['timestamp']), notes: j['notes'],
+    id: j['id'],
+    type: j['type'] is int
+        ? HealthReadingType.values[j['type'] as int]
+        : HealthReadingType.values.byName(j['type'] as String),
+    value: j['value'].toDouble(),
+    systolic: j['systolic']?.toDouble(),
+    diastolic: j['diastolic']?.toDouble(),
+    timestamp: DateTime.parse(j['timestamp']),
+    notes: j['notes'],
   );
 }
 
@@ -182,14 +193,20 @@ class ExerciseRecord {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'type': type.index, 'durationMinutes': durationMinutes,
+    'id': id, 'type': type.name, 'durationMinutes': durationMinutes,
     'distanceKm': distanceKm, 'caloriesBurned': caloriesBurned,
     'timestamp': timestamp.toIso8601String(), 'notes': notes,
   };
 
   factory ExerciseRecord.fromJson(Map<String, dynamic> j) => ExerciseRecord(
-    id: j['id'], type: ExerciseType.values[j['type']], durationMinutes: j['durationMinutes'],
-    distanceKm: j['distanceKm']?.toDouble(), caloriesBurned: j['caloriesBurned'],
-    timestamp: DateTime.parse(j['timestamp']), notes: j['notes'],
+    id: j['id'],
+    type: j['type'] is int
+        ? ExerciseType.values[j['type'] as int]
+        : ExerciseType.values.byName(j['type'] as String),
+    durationMinutes: j['durationMinutes'],
+    distanceKm: j['distanceKm']?.toDouble(),
+    caloriesBurned: j['caloriesBurned'],
+    timestamp: DateTime.parse(j['timestamp']),
+    notes: j['notes'],
   );
 }

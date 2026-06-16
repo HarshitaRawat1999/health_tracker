@@ -55,23 +55,58 @@ class ExerciseScreen extends GetView<HealthController> {
     );
   }
 
-  void _showAddSheet(BuildContext context) {
-    final selectedType = ExerciseType.walk.obs;
-    final durationCtrl = TextEditingController();
-    final distanceCtrl = TextEditingController();
-    final caloriesCtrl = TextEditingController();
-    final notesCtrl = TextEditingController();
+  void _showAddSheet(BuildContext context) async {
+    final message = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ExerciseLogSheet(controller: controller),
+    );
+    if (message != null) {
+      Get.snackbar('Great work!', message,
+        backgroundColor: AppTheme.exerciseColor, colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+}
 
-    Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        padding: EdgeInsets.only(
-          left: 20.w, right: 20.w, top: 20.h,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-        ),
+class _ExerciseLogSheet extends StatefulWidget {
+  final HealthController controller;
+  const _ExerciseLogSheet({required this.controller});
+  @override
+  State<_ExerciseLogSheet> createState() => _ExerciseLogSheetState();
+}
+
+class _ExerciseLogSheetState extends State<_ExerciseLogSheet> {
+  final formKey      = GlobalKey<FormState>();
+  final selectedType = ExerciseType.walk.obs;
+  final durationCtrl = TextEditingController();
+  final distanceCtrl = TextEditingController();
+  final caloriesCtrl = TextEditingController();
+  final notesCtrl    = TextEditingController();
+
+  @override
+  void dispose() {
+    durationCtrl.dispose();
+    distanceCtrl.dispose();
+    caloriesCtrl.dispose();
+    notesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20.w, right: 20.w, top: 20.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+      ),
+      child: Form(
+        key: formKey,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +116,7 @@ class ExerciseScreen extends GetView<HealthController> {
                 children: [
                   Text('Log Exercise', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
                   const Spacer(),
-                  IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.close_rounded)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                 ],
               ),
               SizedBox(height: 16.h),
@@ -115,7 +150,17 @@ class ExerciseScreen extends GetView<HealthController> {
                 )).toList(),
               )),
               SizedBox(height: 16.h),
-              TextField(controller: durationCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Duration (minutes) *', hintText: '30')),
+              TextFormField(
+                controller: durationCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Duration (minutes) *', hintText: '30'),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Duration is required';
+                  final n = int.tryParse(v);
+                  if (n == null || n <= 0) return 'Enter a valid duration';
+                  return null;
+                },
+              ),
               SizedBox(height: 12.h),
               Row(
                 children: [
@@ -129,18 +174,16 @@ class ExerciseScreen extends GetView<HealthController> {
               SizedBox(height: 20.h),
               ElevatedButton(
                 onPressed: () {
-                  if (durationCtrl.text.isEmpty) return;
-                  controller.addExercise(
+                  if (!formKey.currentState!.validate()) return;
+                  final label = selectedType.value.label;
+                  widget.controller.addExercise(
                     type: selectedType.value,
                     durationMinutes: int.parse(durationCtrl.text),
                     distanceKm: double.tryParse(distanceCtrl.text),
                     caloriesBurned: int.tryParse(caloriesCtrl.text),
                     notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
                   );
-                  Get.back();
-                  Get.snackbar('Great work!', '${selectedType.value.label} logged',
-                    backgroundColor: AppTheme.exerciseColor, colorText: Colors.white,
-                    snackPosition: SnackPosition.BOTTOM);
+                  Navigator.pop(context, '$label logged');
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.exerciseColor),
                 child: const Text('Save'),
@@ -149,7 +192,6 @@ class ExerciseScreen extends GetView<HealthController> {
           ),
         ),
       ),
-      isScrollControlled: true,
     );
   }
 }
@@ -159,7 +201,7 @@ class _ExerciseSummaryBar extends GetView<HealthController> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Obx(() => Container(
       margin: EdgeInsets.all(16.w),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -177,7 +219,7 @@ class _ExerciseSummaryBar extends GetView<HealthController> {
           _SummaryItem(label: 'Sessions', value: '${controller.todayExercise.length}', unit: 'total'),
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -247,7 +289,7 @@ class _ExerciseTile extends GetView<HealthController> {
                     Text('${record.distanceKm} km', style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
                   ],
                   Text(' · ', style: TextStyle(color: Colors.grey.shade400, fontSize: 12.sp)),
-                  Text(DateFormat('h:mm a').format(record.timestamp), style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
+                  Text(DateFormat('MMM d, h:mm a').format(record.timestamp), style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
                 ]),
               ],
             )),

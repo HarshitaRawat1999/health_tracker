@@ -48,23 +48,58 @@ class FoodScreen extends GetView<HealthController> {
     );
   }
 
-  void _showAddSheet(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final calCtrl = TextEditingController();
-    final waterCtrl = TextEditingController();
-    final notesCtrl = TextEditingController();
-    final selectedType = FoodType.breakfast.obs;
+  void _showAddSheet(BuildContext context) async {
+    final message = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _FoodLogSheet(controller: controller),
+    );
+    if (message != null) {
+      Get.snackbar('Added!', message,
+        backgroundColor: AppTheme.primary, colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+}
 
-    Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        padding: EdgeInsets.only(
-          left: 20.w, right: 20.w, top: 20.h,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-        ),
+class _FoodLogSheet extends StatefulWidget {
+  final HealthController controller;
+  const _FoodLogSheet({required this.controller});
+  @override
+  State<_FoodLogSheet> createState() => _FoodLogSheetState();
+}
+
+class _FoodLogSheetState extends State<_FoodLogSheet> {
+  final formKey     = GlobalKey<FormState>();
+  final nameCtrl    = TextEditingController();
+  final calCtrl     = TextEditingController();
+  final waterCtrl   = TextEditingController();
+  final notesCtrl   = TextEditingController();
+  final selectedType = FoodType.breakfast.obs;
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    calCtrl.dispose();
+    waterCtrl.dispose();
+    notesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20.w, right: 20.w, top: 20.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+      ),
+      child: Form(
+        key: formKey,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,13 +109,12 @@ class FoodScreen extends GetView<HealthController> {
                 children: [
                   Text('Log Food / Water', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
                   const Spacer(),
-                  IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.close_rounded)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                 ],
               ),
               SizedBox(height: 16.h),
               Obx(() => Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
+                spacing: 8.w, runSpacing: 8.h,
                 children: FoodType.values.map((type) => GestureDetector(
                   onTap: () => selectedType.value = type,
                   child: AnimatedContainer(
@@ -101,8 +135,7 @@ class FoodScreen extends GetView<HealthController> {
                         SizedBox(width: 6.w),
                         Text(type.label,
                           style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12.sp, fontWeight: FontWeight.w600,
                             color: selectedType.value == type ? Colors.white : Colors.grey.shade500,
                           ),
                         ),
@@ -112,7 +145,11 @@ class FoodScreen extends GetView<HealthController> {
                 )).toList(),
               )),
               SizedBox(height: 16.h),
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name / Description', hintText: 'e.g. Oatmeal with banana')),
+              TextFormField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name / Description *', hintText: 'e.g. Oatmeal with banana'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+              ),
               SizedBox(height: 12.h),
               Obx(() => selectedType.value == FoodType.water
                 ? TextField(controller: waterCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Amount (ml)', hintText: '250'))
@@ -123,18 +160,16 @@ class FoodScreen extends GetView<HealthController> {
               SizedBox(height: 20.h),
               ElevatedButton(
                 onPressed: () {
-                  if (nameCtrl.text.trim().isEmpty) return;
-                  controller.addFood(
+                  if (!formKey.currentState!.validate()) return;
+                  final name = nameCtrl.text.trim();
+                  widget.controller.addFood(
                     type: selectedType.value,
-                    name: nameCtrl.text.trim(),
+                    name: name,
                     calories: double.tryParse(calCtrl.text),
                     waterMl: double.tryParse(waterCtrl.text),
                     notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
                   );
-                  Get.back();
-                  Get.snackbar('Added!', '${nameCtrl.text} logged successfully',
-                    backgroundColor: AppTheme.primary, colorText: Colors.white,
-                    snackPosition: SnackPosition.BOTTOM);
+                  Navigator.pop(context, '$name logged successfully');
                 },
                 child: const Text('Save'),
               ),
@@ -142,7 +177,6 @@ class FoodScreen extends GetView<HealthController> {
           ),
         ),
       ),
-      isScrollControlled: true,
     );
   }
 }
@@ -192,7 +226,7 @@ class _FoodTile extends GetView<HealthController> {
                     child: Text(record.type.label, style: TextStyle(fontSize: 11.sp, color: color, fontWeight: FontWeight.w600)),
                   ),
                   SizedBox(width: 8.w),
-                  Text(DateFormat('h:mm a').format(record.timestamp), style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
+                  Text(DateFormat('MMM d, h:mm a').format(record.timestamp), style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
                 ]),
               ],
             )),

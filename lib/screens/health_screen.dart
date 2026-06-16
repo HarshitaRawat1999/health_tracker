@@ -48,23 +48,58 @@ class HealthScreen extends GetView<HealthController> {
     );
   }
 
-  void _showAddSheet(BuildContext context) {
-    final selectedType = HealthReadingType.bp.obs;
-    final valueCtrl = TextEditingController();
-    final systolicCtrl = TextEditingController();
-    final diastolicCtrl = TextEditingController();
-    final notesCtrl = TextEditingController();
+  void _showAddSheet(BuildContext context) async {
+    final message = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _HealthLogSheet(controller: controller),
+    );
+    if (message != null) {
+      Get.snackbar('Saved!', message,
+        backgroundColor: AppTheme.healthColor, colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+}
 
-    Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        padding: EdgeInsets.only(
-          left: 20.w, right: 20.w, top: 20.h,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-        ),
+class _HealthLogSheet extends StatefulWidget {
+  final HealthController controller;
+  const _HealthLogSheet({required this.controller});
+  @override
+  State<_HealthLogSheet> createState() => _HealthLogSheetState();
+}
+
+class _HealthLogSheetState extends State<_HealthLogSheet> {
+  final formKey       = GlobalKey<FormState>();
+  final selectedType  = HealthReadingType.bp.obs;
+  final valueCtrl     = TextEditingController();
+  final systolicCtrl  = TextEditingController();
+  final diastolicCtrl = TextEditingController();
+  final notesCtrl     = TextEditingController();
+
+  @override
+  void dispose() {
+    valueCtrl.dispose();
+    systolicCtrl.dispose();
+    diastolicCtrl.dispose();
+    notesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20.w, right: 20.w, top: 20.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+      ),
+      child: Form(
+        key: formKey,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +109,7 @@ class HealthScreen extends GetView<HealthController> {
                 children: [
                   Text('Log Health Reading', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
                   const Spacer(),
-                  IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.close_rounded)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                 ],
               ),
               SizedBox(height: 16.h),
@@ -109,20 +144,29 @@ class HealthScreen extends GetView<HealthController> {
               )),
               SizedBox(height: 16.h),
               Obx(() => selectedType.value == HealthReadingType.bp
-                ? Row(
-                    children: [
-                      Expanded(child: TextField(controller: systolicCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Systolic', hintText: '120'))),
-                      SizedBox(width: 12.w),
-                      Expanded(child: TextField(controller: diastolicCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Diastolic', hintText: '80'))),
-                    ],
-                  )
-                : TextField(
+                ? Row(children: [
+                    Expanded(child: TextFormField(
+                      controller: systolicCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Systolic *', hintText: '120'),
+                      validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                    )),
+                    SizedBox(width: 12.w),
+                    Expanded(child: TextFormField(
+                      controller: diastolicCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Diastolic *', hintText: '80'),
+                      validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                    )),
+                  ])
+                : TextFormField(
                     controller: valueCtrl,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: '${selectedType.value.label} (${selectedType.value.unit})',
+                      labelText: '${selectedType.value.label} (${selectedType.value.unit}) *',
                       hintText: 'Enter value',
                     ),
+                    validator: (v) => (v == null || v.isEmpty) ? 'Value is required' : null,
                   ),
               ),
               SizedBox(height: 12.h),
@@ -130,10 +174,11 @@ class HealthScreen extends GetView<HealthController> {
               SizedBox(height: 20.h),
               ElevatedButton(
                 onPressed: () {
+                  if (!formKey.currentState!.validate()) return;
+                  final label = selectedType.value.label;
                   final isBP = selectedType.value == HealthReadingType.bp;
                   if (isBP) {
-                    if (systolicCtrl.text.isEmpty || diastolicCtrl.text.isEmpty) return;
-                    controller.addHealthReading(
+                    widget.controller.addHealthReading(
                       type: selectedType.value,
                       value: double.parse(systolicCtrl.text),
                       systolic: double.parse(systolicCtrl.text),
@@ -141,17 +186,13 @@ class HealthScreen extends GetView<HealthController> {
                       notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
                     );
                   } else {
-                    if (valueCtrl.text.isEmpty) return;
-                    controller.addHealthReading(
+                    widget.controller.addHealthReading(
                       type: selectedType.value,
                       value: double.parse(valueCtrl.text),
                       notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
                     );
                   }
-                  Get.back();
-                  Get.snackbar('Saved!', '${selectedType.value.label} logged',
-                    backgroundColor: AppTheme.healthColor, colorText: Colors.white,
-                    snackPosition: SnackPosition.BOTTOM);
+                  Navigator.pop(context, '$label logged');
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.healthColor),
                 child: const Text('Save'),
@@ -160,7 +201,6 @@ class HealthScreen extends GetView<HealthController> {
           ),
         ),
       ),
-      isScrollControlled: true,
     );
   }
 }
@@ -201,7 +241,7 @@ class _HealthTile extends GetView<HealthController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(record.type.label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: AppTheme.textDark)),
-                Text(DateFormat('h:mm a').format(record.timestamp), style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
+                Text(DateFormat('MMM d, h:mm a').format(record.timestamp), style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
                 if (record.notes != null && record.notes!.isNotEmpty)
                   Text(record.notes!, style: TextStyle(fontSize: 12.sp, color: AppTheme.textMuted)),
               ],

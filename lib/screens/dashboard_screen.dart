@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/health_controller.dart';
+import '../controllers/navigation_controller.dart';
 import '../models/health_models.dart';
 import '../utils/app_theme.dart';
 import '../widgets/date_filter_action.dart';
@@ -26,15 +27,30 @@ class DashboardScreen extends GetView<HealthController> {
             SizedBox(height: 16.h),
             const _StatsRow(),
             SizedBox(height: 20.h),
-            const _SectionHeader(title: 'Today\'s Food', icon: Icons.restaurant_rounded, color: AppTheme.foodColor),
+            _SectionHeader(
+              title: 'Today\'s Food',
+              icon: Icons.restaurant_rounded,
+              color: AppTheme.foodColor,
+              onViewAll: () => Get.find<NavigationController>().currentIndex.value = 1,
+            ),
             SizedBox(height: 8.h),
             const _FoodSummary(),
             SizedBox(height: 20.h),
-            const _SectionHeader(title: 'Health Readings', icon: Icons.favorite_rounded, color: AppTheme.healthColor),
+            _SectionHeader(
+              title: 'Health Readings',
+              icon: Icons.favorite_rounded,
+              color: AppTheme.healthColor,
+              onViewAll: () => Get.find<NavigationController>().currentIndex.value = 2,
+            ),
             SizedBox(height: 8.h),
             const _HealthSummary(),
             SizedBox(height: 20.h),
-            const _SectionHeader(title: 'Exercise', icon: Icons.fitness_center_rounded, color: AppTheme.exerciseColor),
+            _SectionHeader(
+              title: 'Exercise',
+              icon: Icons.fitness_center_rounded,
+              color: AppTheme.exerciseColor,
+              onViewAll: () => Get.find<NavigationController>().currentIndex.value = 3,
+            ),
             SizedBox(height: 8.h),
             const _ExerciseSummary(),
             SizedBox(height: 80.h),
@@ -43,7 +59,6 @@ class DashboardScreen extends GetView<HealthController> {
       ),
     );
   }
-
 }
 
 class _GreetingCard extends GetView<HealthController> {
@@ -151,7 +166,8 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color;
-  const _SectionHeader({required this.title, required this.icon, required this.color});
+  final VoidCallback? onViewAll;
+  const _SectionHeader({required this.title, required this.icon, required this.color, this.onViewAll});
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +180,12 @@ class _SectionHeader extends StatelessWidget {
         ),
         SizedBox(width: 8.w),
         Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+        const Spacer(),
+        if (onViewAll != null)
+          GestureDetector(
+            onTap: onViewAll,
+            child: Text('View all', style: TextStyle(fontSize: 12.sp, color: AppTheme.primary, fontWeight: FontWeight.w600)),
+          ),
       ],
     );
   }
@@ -203,7 +225,7 @@ class _HealthSummary extends GetView<HealthController> {
           icon: r.type.icon,
           color: AppTheme.healthColor,
           title: r.type.label,
-          subtitle: DateFormat('h:mm a').format(r.timestamp),
+          subtitle: DateFormat('MMM d, h:mm a').format(r.timestamp),
           trailing: r.displayValue,
         )).toList(),
       );
